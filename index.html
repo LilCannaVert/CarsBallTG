@@ -40,11 +40,11 @@
     class Ball {
         constructor() {
             this.position = createVector(width/2, height/2)
-            this.radius = width/32
+            this.radius = width/12
             const options = {
                 restitution: 0.9,
                 friction: 0.001,
-                density: 0.0001
+                density: 0.0002
             }
             this.body = Bodies.circle(
                 this.position.x, this.position.y, this.radius/2, options
@@ -82,13 +82,13 @@
     class Car {
         constructor(paintColor, startX, startY, startAngle) {
             this.position = createVector(startX, startY);
-            this.width = width/36;
+            this.width = width/16;
             this.length = this.width * 2;
             this.isAccelerating = false;
             this.rotation = 0;
             this.color = paintColor;
             this.history = [];
-            const options = { density: 0.01, friction: 0.2, mass: 50 };
+            const options = { density: 0.02, friction: 0.2, mass: 100 };
             this.body = Bodies.rectangle(
                 this.position.x, this.position.y, this.length, this.width, options
             );
