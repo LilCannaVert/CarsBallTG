@@ -88,6 +88,7 @@
             this.rotation = 0;
             this.color = paintColor;
             this.history = [];
+            this.touchStartPos = null;
             const options = { density: 0.02, friction: 0.2, mass: 100 };
             this.body = Bodies.rectangle(
                 this.position.x, this.position.y, this.length, this.width, options
@@ -97,12 +98,30 @@
         }
         
         touchControl(x, y) {
-            const angle = atan2(y - this.position.y, x - this.position.x);
-            Body.setAngle(this.body, angle);
-            this.accelerating(true);
-            const force = p5.Vector.fromAngle(angle);
-            force.mult(0.03);
-            Body.applyForce(this.body, this.body.position, force);
+            if (!this.touchStartPos) {
+                // Сохраняем начальную позицию касания
+                this.touchStartPos = createVector(x, y);
+                return;
+            }
+
+            // Вычисляем вектор направления от начальной точки касания к текущей позиции
+            const direction = createVector(x - this.touchStartPos.x, y - this.touchStartPos.y);
+            
+            if (direction.mag() > 10) { // Проверяем, что палец действительно двигается
+                const angle = direction.heading();
+                Body.setAngle(this.body, angle);
+                this.accelerating(true);
+                
+                // Увеличиваем силу движения (было 0.02)
+                const force = p5.Vector.fromAngle(angle);
+                force.mult(0.05);
+                Body.applyForce(this.body, this.body.position, force);
+            }
+        }
+
+        resetTouch() {
+            this.touchStartPos = null;
+            this.accelerating(false);
         }
 
         update() {
@@ -124,7 +143,8 @@
 
         accelerate() {
             var force = p5.Vector.fromAngle(this.body.angle)
-            force.mult(0.02);
+            // Увеличиваем базовую скорость (было 0.02)
+            force.mult(0.05);
             Body.applyForce(this.body, this.body.position, force)
         }
 
@@ -370,7 +390,7 @@
     }
 
     function touchEnded() {
-        car.accelerating(false);
+        car.resetTouch();
         car.rotate(0);
         return false;
     }
