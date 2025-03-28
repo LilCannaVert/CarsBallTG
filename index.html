@@ -54,11 +54,11 @@
 
         didScore() {
             const [x, y] = [this.body.position.x, this.body.position.y]
-            const topOfGoalY = height/2 + goalHeight/2
-            const bottomOfGoalY = height/2 - goalHeight/2
-            const withinGoalRange = y < topOfGoalY && y > bottomOfGoalY
+            const leftOfGoalX = width/2 - goalHeight/2
+            const rightOfGoalX = width/2 + goalHeight/2
+            const withinGoalRange = x > leftOfGoalX && x < rightOfGoalX
             if (withinGoalRange) {
-                return (x <= this.radius/2 || x >= width - this.radius/2)
+                return (y <= this.radius/2 || y >= height - this.radius/2)
             }
             return false
         }
@@ -80,23 +80,20 @@
     }
 
     class Car {
-        constructor(paintColor, startX) {
-            const startY = startX < width/2 ? height/4 : 3*height/4
-            this.position = createVector(startX, startY)
-            this.width = width/36
-            this.length = this.width * 2
-            this.isAccelerating = false
-            this.rotation = 0
-            this.color = paintColor
+        constructor(paintColor, startX, startY, startAngle) {
+            this.position = createVector(startX, startY);
+            this.width = width/36;
+            this.length = this.width * 2;
+            this.isAccelerating = false;
+            this.rotation = 0;
+            this.color = paintColor;
             this.history = [];
-            const options = { density: 0.01, friction: 0.2, mass: 50 }
+            const options = { density: 0.01, friction: 0.2, mass: 50 };
             this.body = Bodies.rectangle(
                 this.position.x, this.position.y, this.length, this.width, options
-            )
-            World.add(world, this.body)
-            if (startX > width/2) {
-                Body.setAngle(this.body, PI)
-            }
+            );
+            World.add(world, this.body);
+            Body.setAngle(this.body, startAngle);
         }
         
         touchControl(x, y) {
@@ -237,13 +234,13 @@
     let computerScore = 0;
 
     function setup() {
-        const h = min(window.innerHeight, window.innerWidth * 0.61);
-        // keep field dimensions nice
-        const w = min(window.innerWidth, h * 1.64);
+        // Меняем соотношение сторон на вертикальное
+        const w = min(window.innerWidth, window.innerHeight * 0.61);
+        const h = min(window.innerHeight, w * 1.64);
         
-        createCanvas(w, h)
+        createCanvas(w, h);
 
-        goalHeight = width/6
+        goalHeight = h/6;
 
         engine = Engine.create();
         world = engine.world;
@@ -251,16 +248,19 @@
         // disable matter.js gravity
         engine.world.gravity.y = 0;
 
-        addWalls()
+        addWalls();
 
-        const redHexVals = [255, 100, 100]
-        const playerStartX = width/4;
-        car = new Car(redHexVals, playerStartX)
-        const blueHexVals = [100, 100, 255]
-        const computerStartX = 3*width/4;
-        computerCar = new Car(blueHexVals, computerStartX)
+        const redHexVals = [255, 100, 100];
+        const playerStartY = h * 3/4; // Игрок внизу
+        const playerStartX = w/2;
+        car = new Car(redHexVals, playerStartX, playerStartY, PI/2); // Разворачиваем машину вверх
 
-        ball = new Ball()
+        const blueHexVals = [100, 100, 255];
+        const computerStartY = h/4; // Компьютер вверху
+        const computerStartX = w/2;
+        computerCar = new Car(blueHexVals, computerStartX, computerStartY, -PI/2); // Разворачиваем машину вниз
+        
+        ball = new Ball();
     }
 
     function keyReleased() {
@@ -336,10 +336,10 @@
 
     function shootSparks(x, y) {
         // shoot sparks in opposite direction (towards middle)
-        const xVel = x < width/2 ? 10 : -10;
-        const xPos = x < width/2 ? 0 : width;
+        const yVel = y < height/2 ? 10 : -10;
+        const yPos = y < height/2 ? 0 : height;
         for (var i = 0; i < 50; i++) {
-            var s = new Spark(xPos, y, xVel);
+            var s = new Spark(x, yPos, yVel);
             sparks.push(s);
         }
     }
@@ -376,29 +376,30 @@
     }
 
     function drawSoccerField() {
-        background(254)
-        noFill()
-        stroke(55)
-        strokeWeight(1)
+        background(254);
+        noFill();
+        stroke(55);
+        strokeWeight(1);
 
         // center field line
-        line(width/2, 0, width/2, height)
-        ellipse(width/2, height/2, width/6)
+        line(0, height/2, width, height/2);
+        ellipse(width/2, height/2, height/6);
 
-        // left goalie box
-        rect(0, height/2 - width/6, width/6, width/3)
-        stroke(255, 100, 100);
-        rect(0, height/2 - width/12, width/18, goalHeight)
+        // top goalie box (computer)
+        rect(width/2 - height/6, 0, height/3, height/6);
+        stroke(100, 100, 255);
+        rect(width/2 - goalHeight/2, 0, goalHeight, height/18);
         strokeWeight(10);
-        line(0, height/2 - width/12, 0, height/2 - width/12 + goalHeight)
-        // right goalie box
+        line(width/2 - goalHeight/2, 0, width/2 + goalHeight/2, 0);
+
+        // bottom goalie box (player)
         strokeWeight(1);
         stroke(0);
-        rect(width - width/6, height/2 - width/6, width/6, width/3)
-        stroke(100, 100, 255);
-        rect(width - width/18, height/2 - width/12, width/18, goalHeight);
+        rect(width/2 - height/6, height - height/6, height/3, height/6);
+        stroke(255, 100, 100);
+        rect(width/2 - goalHeight/2, height - height/18, goalHeight, height/18);
         strokeWeight(10);
-        line(width, height/2 - width/12, width, height/2 - width/12 + goalHeight);
+        line(width/2 - goalHeight/2, height, width/2 + goalHeight/2, height);
         strokeWeight(1);
         stroke(0);
     }
